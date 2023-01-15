@@ -1,51 +1,34 @@
 import sys
-import time
-import logging
+from config_FS import config_FS
+
+sys.path.append('.')
+
 from config import config, create_folder
+import numpy as np
+
+import logging
+import time
 from utils import IOHelper
+import csv
 from benchmark import benchmark
-from utils.tables_utils import print_table
+import IOHelper_FS
+from feature_selection_benchmark import feature_selection_benchmark
 
-class Tee(object):
-    def __init__(self, *files):
-        self.files = files
-    def write(self, obj):
-        for f in self.files:
-            f.write(obj)
-            f.flush() # If you want the output to be visible immediately
-    def flush(self) :
-        for f in self.files:
-            f.flush()
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.feature_selection import chi2
 
-"""
-Main entry of the program
-Creates the logging files, loads the data and starts the benchmark.
-All configurations (parameters) of this benchmark are specified in config.py
-"""
 
-def main():
-    # Setting up logging
+
+if __name__ == '__main__':
     create_folder()
+
     logging.basicConfig(filename=config['info_log'], level=logging.INFO)
     logging.info('Started the Logging')
     logging.info(f"Using {config['framework']}")
     start_time = time.time()
 
-    # For being able to see progress that some methods use verbose (for debugging purposes)
-    f = open(config['model_dir'] + '/console.out', 'w')
-    original = sys.stdout
-    sys.stdout = Tee(sys.stdout, f)
-
-    #Load the data
-    trainX, trainY = IOHelper.get_npz_data(config['data_dir'], verbose=True)
-    #Start benchmark
-    # print(trainX.shape)
-    benchmark(trainX, trainY)
-    #directory = 'results/standardML'
-    #print_table(directory, preprocessing='max')
+    trainX, trainY = IOHelper_FS.get_npz_data(config_FS['root_dir'] + config_FS['data_dir'], verbose=True)
+    feature_selection_benchmark(trainX, trainY)
 
     logging.info("--- Runtime: %s seconds ---" % (time.time() - start_time))
     logging.info('Finished Logging')
-
-if __name__=='__main__':
-    main()
